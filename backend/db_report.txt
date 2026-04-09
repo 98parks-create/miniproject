@@ -1,0 +1,1 @@
+--- [REAL-TIME DB REPORT] ---\n저장된 총 진단 데이터 개수: 8개\n

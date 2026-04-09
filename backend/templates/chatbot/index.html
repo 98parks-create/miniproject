@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전문가 AI 챗봇 (Standalone)</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #2df4c0 0%, #2563eb 100%);
+            --soft-blue: #2563eb;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        body { font-family: 'Pretendard', sans-serif; background: #f8fafc; height: 100vh; margin: 0; }
+        .hidden { display: none !important; }
+        
+        /* 챗봇 스타일 */
+        #chatbot-modal {
+            position: fixed; bottom: 120px; right: 40px; width: 350px; height: 500px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column; z-index: 10000; overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-bubble { max-width: 85%; padding: 14px 18px; border-radius: 18px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+        .chat-user { background: var(--soft-blue); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-bot { background: #f1f5f9; color: var(--text-dark); align-self: flex-start; border-bottom-left-radius: 4px; }
+        
+        #chat-input-container { padding: 15px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; background: white; }
+        #chat-input { flex: 1; border: 1px solid #e2e8f0; border-radius: 20px; padding: 10px 15px; outline: none; }
+        #chat-send { background: var(--primary-gradient); color: white; border: none; border-radius: 20px; padding: 0 20px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div style="padding: 50px; text-align: center;">
+        <h1>독립형 정책 전문가 챗봇</h1>
+        <p>하단 우측의 말풍선 버튼을 클릭하여 상담을 시작하세요.</p>
+    </div>
+
+    <!-- AI Chatbot Floating UI -->
+    <div style="position: fixed; bottom: 40px; right: 40px; z-index: 9999;">
+        <div id="chatbot-modal" class="hidden">
+            <div style="padding: 15px; background: var(--primary-gradient); color: white; font-weight: 900; display: flex; justify-content: space-between;">
+                <span>🤖 AI 정책 비서</span>
+                <button onclick="resetChat()" style="background: none; border: none; color: white; cursor: pointer; font-size: 12px;">🔄 초기화</button>
+            </div>
+            <div id="chat-messages">
+                <div class="chat-bubble chat-bot">안녕하세요! 궁금한 정책이나 법률에 대해 질문해 주세요.</div>
+            </div>
+            <form onsubmit="handleChatSubmit(event)" style="margin:0;">
+                <div id="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="질문을 입력하세요..." autocomplete="off">
+                    <button type="submit" id="chat-send">전송</button>
+                </div>
+            </form>
+        </div>
+
+        <div onclick="toggleChatbot()" style="width: 64px; height: 64px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+            💬
+        </div>
+    </div>
+
+    <script>
+        function toggleChatbot() {
+            document.getElementById('chatbot-modal').classList.toggle('hidden');
+        }
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            appendChat('user', msg);
+            input.value = '';
+
+            try {
+                const res = await fetch('{% url "chatbot:chat_gemini" %}', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                if(data.reply) appendChat('bot', data.reply);
+                else appendChat('bot', "에러: " + data.error);
+            } catch(e) {
+                appendChat('bot', "네트워크 오류가 발생했습니다.");
+            }
+        }
+
+        function appendChat(role, text) {
+            const box = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `chat-bubble chat-${role}`;
+            div.innerHTML = text.replace(/\n/g, '<br/>');
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function resetChat() {
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '<div class="chat-bubble chat-bot">안녕하세요! 궁금한 정책이나 법률에 대해 질문해 주세요.</div>';
+        }
+    </script>
+</body>
+</html>

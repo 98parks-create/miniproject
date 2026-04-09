@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}청춘로(路) - AI 지능형 정책 매칭 시스템{% endblock %}</title>
+    
+    <!-- 🧭 디자인 시스템 로드 -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    <!-- 📡 외부 라이브러리 (Chart.js 등) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-main-container">
+        <!-- 🎨 다이나믹 배경 엔진 (CSS Blobs) -->
+        <div class="bg-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+        </div>
+
+        <!-- ⚓ 고정형 글래스 헤더 -->
+        <header class="fixed-glass-header">
+            <a href="{% url 'index' %}" class="logo-link">
+                <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 16px; box-shadow: 0 8px 20px rgba(45, 244, 192, 0.3);">
+                    LOGO
+                </div>
+                <span style="font-size: 18px; font-weight: 800; letter-spacing: -0.5px;">청춘로<span style="color: var(--soft-blue);">.路</span></span>
+            </a>
+
+            <nav style="display: flex; gap: 10px; align-items: center;">
+                <a href="{% url 'index' %}" class="nav-link">홈</a>
+                <a href="{% url 'diagnose' %}" class="nav-link">지능형 진단</a>
+                
+                {% if user.is_authenticated %}
+                    <a href="{% url 'my_reports' %}" class="nav-link">내 리포트</a>
+                    <div style="width: 1px; height: 15px; background: rgba(0,0,0,0.1); margin: 0 10px;"></div>
+                    <span style="font-size: 13px; font-weight: 800; color: var(--soft-blue);">{{ user.username }}님</span>
+                    <a href="{% url 'logout' %}" class="nav-link" style="color: #ff6b6b; opacity: 1;">로그아웃</a>
+                {% else %}
+                    <div style="width: 1px; height: 15px; background: rgba(0,0,0,0.1); margin: 0 10px;"></div>
+                    <a href="{% url 'login' %}" class="nav-link">로그인</a>
+                    <a href="{% url 'signup' %}" class="nav-link" style="background: var(--primary-gradient); color: white; padding: 8px 16px; border-radius: 10px; opacity: 1; box-shadow: 0 5px 15px rgba(45, 244, 192, 0.2);">가입하기</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        <!-- 🏠 메인 콘텐츠 영역 -->
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <!-- AI 비서 플로팅 버튼 (UI 전용) -->
+        <div style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;">
+            <div style="position: relative;">
+                <div style="position: absolute; bottom: 75px; right: 0; background: white; padding: 10px 18px; border-radius: 18px 20px 0 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); white-space: nowrap; font-size: 12px; font-weight: 800; color: var(--soft-blue); border: 1px solid rgba(45, 244, 192, 0.2);">
+                    실시간 지능형 상담
+                </div>
+                <a href="{% url 'chatbot:chat_view' %}" class="chatbot-trigger-btn" style="width: 60px; height: 60px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 800; box-shadow: 0 10px 25px rgba(45, 244, 192, 0.4); cursor: pointer; text-decoration: none; transition: 0.3s transform;">
+                    HELP
+                </a>
+            </div>
+        </div>
+
+        <!-- 🏁 푸터 -->
+        <footer style="text-align: center; padding: 60px 0; opacity: 0.3; font-size: 12px;">
+            © 2026 청춘로(路) - DJANGO MONOLITHIC ENGINE
+        </footer>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

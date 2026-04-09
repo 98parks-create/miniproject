@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}청춘로 - 내 리포트 보관함{% endblock %}
+
+{% block extra_head %}
+<style>
+    .reports-header { margin-bottom: 40px; }
+    .filter-bar {
+        display: flex; gap: 15px; align-items: center; justify-content: center;
+        margin-bottom: 40px; padding: 25px; border-radius: 20px;
+        background: rgba(255,255,255,0.4); border: 1px solid rgba(45, 244, 192, 0.2);
+    }
+    .filter-item select, .filter-item input {
+        padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);
+        background: white; font-weight: 700; color: var(--text-dark);
+    }
+    .filter-btn {
+        padding: 10px 25px; border-radius: 12px; border: none;
+        background: var(--soft-blue); color: white; font-weight: 800; cursor: pointer;
+        transition: 0.3s;
+    }
+    .filter-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); }
+
+    .reports-grid { display: flex; flex-direction: column; gap: 20px; }
+    .report-item {
+        padding: 25px; display: flex; justify-content: space-between; align-items: center;
+        transition: 0.3s;
+    }
+    .report-item:hover { transform: scale(1.01); border-color: var(--neon-mint); }
+    .report-info h3 { font-size: 18px; margin-bottom: 5px; font-weight: 800; }
+    .report-info p { font-size: 13px; color: var(--text-muted); }
+    .report-action a {
+        padding: 10px 25px; border-radius: 12px; background: rgba(45, 244, 192, 0.1);
+        color: var(--neon-mint); font-weight: 800; font-size: 13px; transition: 0.3s;
+    }
+    .report-action a:hover { background: var(--neon-mint); color: white; }
+    
+    .empty-state { text-align: center; padding: 100px 0; color: var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="app-view">
+    <div class="container">
+        <div class="reports-header" style="text-align: center;">
+            <h1 style="font-size: 32px; font-weight: 900;">📂 내 리포트 <span style="color: var(--soft-blue);">보관함</span></h1>
+            <p style="color: var(--text-muted);">지금까지의 모든 지능형 진단 기록을 지역 및 날짜별로 확인하세요.</p>
+        </div>
+
+        <!-- 🕵️ 지능형 필터바 -->
+        <form method="get" class="filter-bar">
+            <div class="filter-item">
+                <select name="region">
+                    <option value="">모든 지역</option>
+                    {% for key, label in regions %}
+                        <option value="{{ key }}" {% if current_region == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <input type="date" name="date" value="{{ current_date|default:'' }}">
+            </div>
+            <button type="submit" class="filter-btn">필터 적용 🔍</button>
+            <a href="{% url 'my_reports' %}" style="font-size: 12px; color: var(--text-muted); margin-left: 10px;">초기화</a>
+        </form>
+
+        <!-- 📑 리포트 리스트 -->
+        <div class="reports-grid">
+            {% for report in reports %}
+            <div class="glass-panel report-item floating-card">
+                <div class="report-info">
+                    <span style="font-size: 10px; font-weight: 800; color: var(--soft-blue); background: rgba(59, 130, 246, 0.1); padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px;">
+                        {{ report.created_at|date:"Y.m.d H:i" }}
+                    </span>
+                    <h3>{{ report.get_region_display }} 지능형 맞춤 분석</h3>
+                    <p>연소득 {{ report.total_income }}만원 | 보유 자산 {{ report.assets }}만원</p>
+                </div>
+                <div class="report-action">
+                    <a href="{% url 'result' pk=report.pk %}">리포트 보기 ↗</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state glass-panel">
+                <div style="font-size: 40px; margin-bottom: 15px;">🔎</div>
+                <p>일치하는 진단 기록이 없습니다.</p>
+                <a href="{% url 'diagnose' %}" style="display: inline-block; margin-top: 20px; color: var(--soft-blue); font-weight: 800;">지금 바로 첫 진단을 시작해 보세요!</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

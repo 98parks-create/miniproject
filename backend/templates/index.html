@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}청춘로(路) - 당신의 주거·금융 파트너{% endblock %}
+
+{% block content %}
+<section class="app-view flex-center">
+    <div class="container" style="text-align: center;">
+        <!-- 히어로 패널 (Glassmorphism) -->
+        <div class="glass-panel" style="padding: 60px 40px; max-width: 900px; margin: 0 auto; min-height: 480px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            
+            <div class="animate-float" style="margin-bottom: 30px;">
+                <div style="width: 100px; height: 100px; background: var(--primary-gradient); border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: white; box-shadow: 0 20px 40px rgba(45, 244, 192, 0.4);">
+                    ROAD
+                </div>
+            </div>
+
+            <h1 style="font-size: 52px; font-weight: 800; line-height: 1.2; letter-spacing: -2px; margin-bottom: 24px;">
+                당신의 청춘, <br/>
+                <span style="background: var(--primary-gradient); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">지능형 정책 매칭</span>으로 새 길을 열다.
+            </h1>
+
+            <p style="font-size: 18px; color: var(--text-muted); max-width: 600px; margin-bottom: 40px; font-weight: 600;">
+                복잡한 내 집 마련, 금리 계산, 복지 혜택. <br/>
+                청춘로 AI 분석기가 1분 만에 당신의 최적 경로를 설계합니다.
+            </p>
+
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <a href="{% url 'diagnose' %}" class="btn-matching">
+                    지금 바로 무료 진단하기
+                </a>
+            </div>
+
+            <!-- 📡 실시간 지능형 연동 현황 (Antigravity Verified) -->
+            <div style="margin-top: 50px; display: flex; gap: 32px; padding: 15px 30px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px);">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 800; color: #4ade80; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #4ade80;"></span>
+                    공공데이터포털 연동
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 800; color: #4ade80; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #4ade80;"></span>
+                    금융감독원 연동
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 800; color: #4ade80; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #4ade80;"></span>
+                    고용노동부 연동
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

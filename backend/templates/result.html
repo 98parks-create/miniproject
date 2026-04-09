@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}청춘로 - 맞춤 지능형 리포트{% endblock %}
+
+{% block extra_head %}
+<!-- Bootstrap 5 & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.4);
+        --neon-mint: #2df4c0;
+        --soft-blue: #3b82f6;
+        --soft-red: #ff6b6b;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f0f4f8 0%, #e5eef5 100%);
+        min-height: 100vh;
+    }
+
+    /* ✨ 프리미엄 글래스모피즘 카드 */
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: auto; /* 고정 높이 제거하여 겹침 방지 */
+        min-height: 480px;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .hero-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(45, 244, 192, 0.1));
+        border: 2px solid rgba(45, 244, 192, 0.3);
+        margin-bottom: 40px;
+    }
+
+    .category-title {
+        font-weight: 900;
+        font-size: 1.5rem;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .product-title {
+        font-weight: 900;
+        font-size: 1.4rem;
+        margin-bottom: 15px;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+
+    .badge-custom {
+        font-size: 0.85rem;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        display: inline-block;
+    }
+
+    .badge-housing { background: rgba(45, 244, 192, 0.2); color: #065f46; }
+    .badge-finance { background: rgba(59, 130, 246, 0.2); color: #1e40af; }
+    .badge-welfare { background: rgba(255, 107, 107, 0.2); color: #991b1b; }
+
+    .meta-info {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 15px;
+    }
+
+    .btn-glass {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid var(--soft-blue);
+        color: var(--soft-blue);
+        border-radius: 12px;
+        font-weight: 700;
+        padding: 8px 20px;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: auto;
+        text-align: center;
+    }
+
+    .btn-glass:hover {
+        background: var(--soft-blue);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #94a3b8;
+    }
+
+    /* 📊 통계 섹션 */
+    .stats-container {
+        margin-top: 50px;
+        margin-bottom: 50px;
+    }
+
+    #balanceChart {
+        max-height: 300px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 🧭 헤더 섹션 -->
+    <div class="row mb-5 text-center">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-3">
+                {{ diagnostic.get_region_display }} <span style="color: var(--soft-blue);">지능형 맞춤 리포트</span>
+            </h1>
+            <p class="lead text-secondary">연봉 {{ diagnostic.total_income }}만원 자산가님을 위한 최적의 데이터 로드맵</p>
+        </div>
+    </div>
+
+    <!-- 🥇 히어로 전체 요약 부문 (고정형) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card hero-card">
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <h2 class="h4 fw-bold mb-3"><i class="fas fa-microchip me-2 text-primary"></i> 안티그래비티 전문가 분석 리포트</h2>
+                        <p class="mb-2">
+                            사용자님의 소득({{ diagnostic.total_income }}만원) 대비 <strong>PIR 지수(Price to Income Ratio)</strong>를 분석한 결과, 
+                            현재 매매가 <strong>{{ report.financial_simulation.max_limit|add:diagnostic.assets }}만원</strong> 이하의 매물이 가장 현실적인 선택지로 분석되었습니다.
+                        </p>
+                        <div class="badge bg-primary rounded-pill px-3 py-2">DSR 40% 준수</div>
+                        <div class="badge bg-info rounded-pill px-3 py-2 ms-2">LTV 70% 준수</div>
+                    </div>
+                    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                        <div class="p-3 bg-white rounded-4 border shadow-sm d-inline-block text-start w-100" style="max-width: 320px;">
+                            <div class="small fw-bold text-muted mb-1">최대 대출 가용한도</div>
+                            <div class="h2 fw-black text-primary mb-1">{{ report.financial_simulation.max_limit }}<small class="h5">만원</small></div>
+                            <div class="small text-secondary mb-2">예상 최저 금리: <span class="fw-bold">연 {{ report.financial_simulation.expected_rate }}%</span></div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small fw-bold text-danger">월 예상 납입 이자</span>
+                                <span class="h5 fw-bold text-danger mb-0">약 {{ report.financial_simulation.monthly_interest }}만원</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🏗️ 3단 그리드 (주거 / 금융 / 복지) -->
+    <div class="row g-4">
+        <!-- 🏠 주거 섹션 -->
+        <div class="col-md-4">
+            <div class="glass-card">
+                <div class="category-title text-success">
+                    <i class="fas fa-home"></i> 현실적 주거 전략
+                </div>
+                
+                {% if report.housing.top_1 %}
+                    {% if report.housing.top_1.tag %}
+                        <span class="badge {% if report.housing.top_1.tag == '모집예정' %}bg-info{% else %}bg-primary{% endif %} rounded-pill px-3 py-1 mb-2 fw-bold text-white">
+                            <i class="fas fa-clock me-1"></i> {{ report.housing.top_1.tag }}
+                        </span>
+                    {% else %}
+                        <span class="badge-custom badge-housing">Recommended #1</span>
+                    {% endif %}
+                    
+                    <h3 class="product-title">{{ report.housing.top_1.title }}</h3>
+                    <div class="meta-info fs-6">
+                        <i class="fas fa-building me-1"></i> {{ report.housing.top_1.org }}<br>
+                        {% if report.housing.top_1.end_date %}
+                            <i class="fas fa-calendar-alt me-1 text-danger"></i> 접수 마감: <strong>{{ report.housing.top_1.end_date }}</strong>까지<br>
+                        {% endif %}
+                        {% if report.housing.top_1.formatted_price %}
+                            <i class="fas fa-coins me-1 text-warning"></i> 분양가: <strong>{{ report.housing.top_1.formatted_price }}</strong>
+                        {% endif %}
+                    </div>
+                    <p class="fs-6 text-muted mb-4">{{ report.housing.reason }}</p>
+                    <a href="{{ report.housing.top_1.url }}" target="_blank" class="btn-glass fs-5 py-2">상세 공고 확인</a>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-search-location fa-3x mb-3 text-light"></i>
+                        <h5 class="fw-bold">매칭 매물 검색 중</h5>
+                        <p class="small mb-0">{{ report.housing.reason }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 💰 금융 섹션 -->
+        <div class="col-md-4">
+            <div class="glass-card">
+                <div class="category-title text-primary">
+                    <i class="fas fa-landmark"></i> 금융 시뮬레이션
+                </div>
+
+                {% if report.finance.top_1 and not report.finance.top_1.is_default %}
+                    {% if report.finance.top_1.tag %}
+                        <span class="badge {% if report.finance.top_1.tag == '모집예정' %}bg-info{% else %}bg-primary{% endif %} rounded-pill px-3 py-1 mb-2 fw-bold text-white">
+                            {{ report.finance.top_1.tag }}
+                        </span>
+                    {% endif %}
+                    <h3 class="product-title">{{ report.finance.top_1.name }}</h3>
+                    <div class="meta-info">
+                        <i class="fas fa-university me-1"></i> {{ report.finance.top_1.bank_nm }}<br>
+                        <i class="fas fa-percentage me-1"></i> 연동 금리: <strong>연 {{ report.finance.top_1.base_rate }}%</strong>
+                    </div>
+                    <div class="p-3 bg-light rounded-4 border mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-muted">이론적 최대 한도</span>
+                            <span class="small fw-bold">{{ report.finance.top_1.limit }}만원</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="small text-muted">실질 가용 한도(Sim)</span>
+                            <span class="small fw-bold text-primary">{{ report.financial_simulation.max_limit }}만원</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: 70%"></div>
+                        </div>
+                    </div>
+                    <a href="{{ report.finance.top_1.url }}" target="_blank" class="btn-glass w-100">전문 상담 신청</a>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-receipt fa-3x mb-3 text-light"></i>
+                        <h5 class="fw-bold">금융 데이터 분석 중</h5>
+                        <p class="small mb-0">{{ report.finance.reason }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 🎁 복지 섹션 -->
+        <div class="col-md-4">
+            <div class="glass-card">
+                <div class="category-title text-danger">
+                    <i class="fas fa-heart"></i> 수혜 정책 총망라
+                </div>
+
+                {% if report.welfare.top_1 and not report.welfare.top_1.is_default %}
+                    {% if report.welfare.top_1.tag %}
+                        <span class="badge {% if report.welfare.top_1.tag == '모집예정' %}bg-info{% else %}bg-primary{% endif %} rounded-pill px-3 py-1 mb-2 fw-bold text-white">
+                            {{ report.welfare.top_1.tag }}
+                        </span>
+                    {% endif %}
+                    <h3 class="product-title">{{ report.welfare.top_1.title }}</h3>
+                    <div class="meta-info">
+                        <i class="fas fa-landmark me-1"></i> {{ report.welfare.top_1.org }}
+                    </div>
+                    <p class="small text-muted mb-4">{{ report.welfare.top_1.benefit|truncatechars:80 }}</p>
+                    
+                    <div class="mb-3">
+                        {% for item in report.welfare.list|slice:":2" %}
+                            <div class="d-flex align-items-center mb-2 small">
+                                <i class="fas fa-check-circle text-danger me-2"></i>
+                                <span class="text-truncate">{{ item.name }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ report.welfare.top_1.url }}" target="_blank" class="btn-glass">혜택 리스트 보기</a>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-gift fa-3x mb-3 text-light"></i>
+                        <h5 class="fw-bold">정책 모니터링 중</h5>
+                        <p class="small mb-0">{{ report.welfare.reason }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 상환 및 자산 통계 섹션 -->
+    <div class="row stats-container">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-card text-center">
+                <h3 class="fw-bold mb-4"><i class="fas fa-chart-pie me-2 text-info"></i> 전문가 자금 구조 진단</h3>
+                <div style="max-width: 400px; margin: 0 auto;">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+                <div class="mt-4 row">
+                    <div class="col-4">
+                        <div class="fw-bold text-success">{{ diagnostic.assets }}만</div>
+                        <div class="small text-muted">기본 자산</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-danger">{{ diagnostic.debt }}만</div>
+                        <div class="small text-muted">기존 부채</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-primary">{{ report.chart_data.projected_loan }}만</div>
+                        <div class="small text-muted">예상 부채</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ report.chart_data|json_script:"dashboard-data" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dashboardData = JSON.parse(document.getElementById('dashboard-data').textContent);
+        const ctx = document.getElementById('balanceChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['보유 자산', '기존 부채', '예상 추가 부채'],
+                datasets: [{
+                    data: [dashboardData.assets, dashboardData.debt, dashboardData.projected_loan],
+                    backgroundColor: ['#2df4c0', '#ff6b6b', '#3b82f6'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
