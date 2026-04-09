@@ -12,6 +12,14 @@ REGION_CHOICES = [
     ('Daejeon', '대전광역시'),
     ('Ulsan', '울산광역시'),
     ('Sejong', '세종특별자치시'),
+    ('Gangwon', '강원도'),
+    ('Chungbuk', '충청북도'),
+    ('Chungnam', '충청남도'),
+    ('Jeonbuk', '전라북도'),
+    ('Jeonnam', '전라남도'),
+    ('Gyeongbuk', '경상북도'),
+    ('Gyeongnam', '경상남도'),
+    ('Jeju', '제주특별자치도'),
 ]
 
 MARITAL_CHOICES = [

@@ -12,11 +12,11 @@ class UserDiagnostic(models.Model):
     )
 
     REGION_CHOICES = [
-        ('Seoul', '서울'),
-        ('Gyeonggi', '경기'),
-        ('Incheon', '인천'),
-        ('Busan', '부산'),
-        ('Other', '기타'),
+        ('Seoul', '서울'), ('Gyeonggi', '경기'), ('Incheon', '인천'), ('Busan', '부산'),
+        ('Daegu', '대구'), ('Gwangju', '광주'), ('Daejeon', '대전'), ('Ulsan', '울산'),
+        ('Sejong', '세종'), ('Gangwon', '강원'), ('Chungbuk', '충북'), ('Chungnam', '충남'),
+        ('Jeonbuk', '전북'), ('Jeonnam', '전남'), ('Gyeongbuk', '경북'), ('Gyeongnam', '경남'),
+        ('Jeju', '제주'), ('Other', '기타'),
     ]
     MARITAL_CHOICES = [
         ('Single', '미혼'),
