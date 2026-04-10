@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Django Backend (youth_road)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["manage.py", "runserver", "0.0.0.0:8000"],
+      "cwd": "backend",
+      "port": 8000
+    },
+    {
+      "name": "Django Chatbot",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["manage.py", "runserver", "0.0.0.0:8001"],
+      "cwd": "backend/chatbot",
+      "port": 8001
+    }
+  ]
+}

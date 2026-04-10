@@ -123,18 +123,18 @@ class MatchingEngine:
         today = date.today()
         end_date = product.get('end_date')
         notice_date = product.get('notice_date')
-        
-        # v38: [상시 모집] 상품 지원 (날짜 정보가 없어도 활성 데이터면 허용)
+
+        # 날짜 정보가 전혀 없으면 상시 모집으로 허용
         if not end_date and not notice_date:
             return True
-            
+
+        # 마감일이 이미 지난 상품 배제
         if end_date and end_date < today:
             return False
-        
-        # v38: 공고일이 오래되었더라도 마감일이 없으면 '상시 모집'으로 간주하여 허용
+
+        # 마감일 없이 공고일만 있는 경우: 공고일이 1년 이내인 것만 허용 (오래된 주거 공고 배제)
         if not end_date and notice_date:
-            # 180일 제한을 제거하여 모든 가용 공고 노출
-            return True
+            return notice_date >= today - timedelta(days=365)
             
         # 5. [v19] 무주택 및 소유 이력 필터링 (Hyper-Strict)
         # 공공임대 및 대부분의 청약은 무주택 필수
@@ -216,12 +216,17 @@ class MatchingEngine:
             # [Steel Wall v31] 총 구매력: (보유 자금) + (연봉) + (대출 한도)
             total_budget = net_worth + annual_income + est_loan_cap
             
+            one_year_ago = today - timedelta(days=365)
             local_products = list(HousingProduct.objects.filter(
                 Q(region__icontains=reg_key) | Q(region__icontains="전용") | Q(region__icontains="전국"),
                 is_active=True
             ).filter(
-                # v40.1: 마감일이 미래이거나, 마감일이 명시되지 않은 '상시 모집' 상품 전체 수용 (공고일 무관)
-                Q(end_date__gte=today) | Q(notice_date__gte=today) | Q(end_date__isnull=True)
+                # 마감일이 오늘 이후이거나, 시행예정(공고일 미래)이거나,
+                # 날짜 없는 상시모집 또는 1년 이내 공고된 마감일 없는 상품만 허용
+                Q(end_date__gte=today) |
+                Q(notice_date__gte=today) |
+                Q(end_date__isnull=True, notice_date__isnull=True) |
+                Q(end_date__isnull=True, notice_date__gte=one_year_ago)
             ).order_by('notice_date')[:150])
             
             valid = []
@@ -316,10 +321,12 @@ class MatchingEngine:
     def analyze_finance(instance):
         """[STRICT] 금융: 소득 및 상황별 적격성 무한 대조"""
         try:
-            # v35: 금융 데이터 가시성 확보 (날짜 필터 해제)
             local = FinanceProduct.objects.filter(is_active=True).filter(
-                Q(end_date__gte=date.today()) | Q(end_date__isnull=True)
-            )
+                # 마감일 미도래이거나, 상시 운영 상품이거나, 시행예정(공고일 미래) 상품만 허용
+                Q(end_date__gte=date.today()) |
+                Q(end_date__isnull=True) |
+                Q(notice_date__gte=date.today())
+            ).exclude(end_date__lt=date.today())
 
             valid = []
             sim = MatchingEngine.calculate_simulation(instance)
@@ -376,8 +383,11 @@ class MatchingEngine:
                 
                 # [v22] 상태 태그 부여
                 tag = "모집중"
-                if p.notice_date and p.notice_date > date.today(): tag = "모집예정"
-                
+                if not p.notice_date and not p.end_date:
+                    tag = "상시 모집"
+                elif p.notice_date and p.notice_date > date.today():
+                    tag = "모집예정"
+
                 # v39.2: 금융 데이터 가시성 확보 점수 보정
                 # 5000만원 연봉인 경우 '버팀목', '디딤돌' 등 서민금융 상품에 가점 부여
                 if "버팀목" in title or "디딤돌" in title: 
@@ -492,31 +502,39 @@ class MatchingEngine:
             if reg_key:
                 query |= Q(region__icontains=reg_key)
             
-            # v35: 복지 정책 가시성 확보 (날짜 필터 해제)
             local = WelfareProduct.objects.filter(query, is_active=True).filter(
-                Q(end_date__gte=date.today()) | Q(end_date__isnull=True)
-            )
+                # 마감일 미도래이거나, 상시 운영 정책이거나, 시행예정(공고일 미래) 정책만 허용
+                Q(end_date__gte=date.today()) |
+                Q(end_date__isnull=True) |
+                Q(notice_date__gte=date.today())
+            ).exclude(end_date__lt=date.today())
             
             valid = []
             
             for p in local:
-                # [STRICT] 모집 기간 필터링
                 today = date.today()
-                
-                # [v22] 상태 태그 부여
+
+                # 마감일이 지난 상품 명시적 배제 (DB 필터 보조)
+                if p.end_date and p.end_date < today:
+                    continue
+
+                # 상태 태그 부여
                 tag = "모집중"
-                if p.notice_date and p.notice_date > today: tag = "모집예정"
+                if not p.notice_date and not p.end_date:
+                    tag = "상시 모집"
+                elif p.notice_date and p.notice_date > today:
+                    tag = "모집예정"
 
                 score = MatchingEngine.calculate_welfare_score(instance, p)
-                # v39: 복지 가시성 확보 (threshold 하향: 소량의 양수면 노출)
                 if score < 0: continue
-                
+
                 valid.append({
                     'name': p.title,
                     'org': p.org_nm,
                     'benefit': p.benefit_desc,
                     'url': p.url or '#',
-                    'score': score
+                    'score': score,
+                    'tag': tag
                 })
             
             if not valid: return MatchingEngine.get_default_item("복지")
