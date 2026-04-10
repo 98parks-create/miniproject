@@ -275,8 +275,9 @@ class MatchingEngine:
                 }
                 
                 if MatchingEngine.is_eligible_housing(instance, p_data):
+                    score = MatchingEngine.calculate_housing_score(instance, p_data)
                     if instance.subscription_count >= 24: score += 150
-                    
+
                     p_data['score'] = score
                     p_data['is_attractive_plus'] = is_attractive_plus
                     valid.append(p_data)
