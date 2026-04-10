@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청춘로 | 글래스모피즘</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 스타일 시작 (CSS) -->
+    <style>
+        :root {
+            --primary-color: #74ebd5; 
+            --secondary-color: #ACB6E5; 
+            --text-color: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.15); 
+            --glass-border: rgba(255, 255, 255, 0.2); 
+            --glass-blur: blur(15px); 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 상단바 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 50px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--glass-border);
+            position: fixed;
+            top: 0; width: 100%; box-sizing: border-box; z-index: 1000;
+        }
+
+        .logo { font-weight: bold; font-size: 1.4rem; cursor: pointer; }
+        
+        nav a {
+            text-decoration: none;
+            color: rgba(255,255,255,0.8);
+            margin-left: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* 메인 영역 */
+        main {
+            flex: 1;
+            max-width: 1100px;
+            margin: 150px auto 50px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* 카드 컨테이너 */
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            margin-top: 50px;
+        }
+
+        /* 글래스모피즘 카드 */
+        .policy-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            width: 280px;
+            padding: 60px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: 0.3s ease;
+            cursor: pointer;
+        }
+
+        .policy-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .icon { font-size: 4rem; margin-bottom: 20px; display: block; }
+        .card-title { font-size: 1.2rem; font-weight: bold; }
+
+        /* 하단바 */
+        footer {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: var(--glass-blur);
+            padding: 30px 50px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--glass-border);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">청춘로</div>
+        <nav>
+            <a href="#">청춘로AI</a>
+            <a href="#">통합검색</a>
+            <a href="/login/">로그인</a>
+            <a href="register_step1.html" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:15px;">회원가입</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>청년를 위한 맞춤 정책</h1>
+        <div class="card-container">
+            <div class="policy-card">
+                <span class="icon">💼</span>
+                <div class="card-title">청년 복지 지원</div>
+            </div>
+            <div class="policy-card">
+                <span class="icon">🏠</span>
+                <div class="card-title">청년 주거 지원</div>
+            </div>
+            <div class="policy-card">
+                <span class="icon">🚀</span>
+                <div class="card-title">청년 금융 지원</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div>
+            <p>주소: 서울특별시 ... | 전화: 02-1234-5678 | 찾아오시는길</p>
+            <div class="footer-links">
+                <span>조직도</span> | <strong>개인정보처리방침</strong> | <span>저작권정책</span>
+            </div>
+            <p style="margin-top:10px;">Copyright © 2024 청년정책 ZIP. All rights reserved.</p>
+        </div>
+        <!-- 이 부분을 아래 코드로 교체하세요 -->
+        <div style="font-size: 1.5rem; display: flex; gap: 15px; align-items: center;">
+            <a href="https://www.instagram.com" target="_blank" style="color: white; text-decoration: none;">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://pf.kakao.com" target="_blank" style="color: white; text-decoration: none;">
+                <i class="fa-solid fa-comment"></i>
+            </a>
+            <a href="https://www.youtube.com" target="_blank" style="color: white; text-decoration: none;">
+                <i class="fa-brands fa-youtube"></i>
+            </a>
+        </div>
+    </footer>

@@ -1,0 +1,20 @@
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 가상 환경 (전달 시 용량 최적화를 위해 제외)
+venv/
+env/
+ENV/
+
+# 데이터베이스
+db.sqlite3
+
+# 개인 보안 정보 (절대 공유 금지)
+.env
+
+# 로그 및 OS 관련 파일
+*.log
+.DS_Store
+Thumbs.db

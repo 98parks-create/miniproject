@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    /* 개인/법인 탭 스타일 */
+.user-type-tab {
+    display: flex;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.user-type-tab input[type="radio"] { display: none; }
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    color: #858181;
+    transition: 0.3s;
+}
+
+.user-type-tab input[type="radio"]:checked + .tab-btn {
+    background: #1a4f8b; /* 영상 속 남색 포인트 컬러 */
+    font-weight: bold;
+}
+
+/* 입력 필드 스타일 */
+.field-group { margin-bottom: 25px; }
+.field-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+.dual-input { display: flex; align-items: center; gap: 10px; }
+.input-with-btn { display: flex; gap: 10px; }
+.inner-btn {
+    padding: 0 20px;
+    background: #666;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.mt-10 { margin-top: 10px; }
+
+body {
+    background-color: #f5f7fa;
+    margin: 0;
+    display: flex;
+    justify-content: center; /* 가로 중앙 */
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 50px 0;
+}
+
+.register-container {
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column; /* 제목과 폼을 세로로 나열 */
+    align-items: center;    /* 자식 요소들을 가운데 정렬 */
+}
+
+.title-section {
+    text-align: center;     /* 글자 중앙 정렬 */
+    margin-bottom: 30px;
+}
+
+.glass-card-wide {
+    width: 100%;            /* 컨테이너 너비에 맞게 꽉 채움 */
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-sizing: border-box; /* 패딩 때문에 너비가 넘치지 않게 함 */
+
+    /* 버튼 그룹 정렬을 위한 스타일 추가 */
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn {
+    flex: 1;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    font-size: 16px;
+}
+
+.btn-primary { background: #1a4f8b; color: white; }
+.btn-secondary { background: #eee; color: #333; }
+}
+
+.required-star {
+    color: #e74c3c; /* 선명한 빨간색 */
+    margin-left: 2px;
+}
+</style>
+<body>
+    <div class="register-container">
+        <!-- 제목 섹션 -->
+        <div class="title-section">
+            <h1 class="main-title">회원가입</h1>
+            <h2>회원정보입력</h2>
+        </div>
+
+        <!-- 폼 섹션 (이제 컨테이너 안으로 들어왔습니다) -->
+        <form method="post" class="glass-card-wide">
+            {% csrf_token %}
+            
+            <!-- 개인/법인 선택 탭 -->
+            <div class="user-type-tab">
+                <input type="radio" name="user_type" value="individual" id="type-personal" checked>
+                <label for="type-personal" class="tab-btn">개인</label>
+                
+                <input type="radio" name="user_type" value="corporate" id="type-business">
+                <label for="type-business" class="tab-btn">법인</label>
+            </div>
+
+            <div class="input-section">
+                <h3>기본정보</h3>
+                
+               <!-- 이름 -->
+<div class="field-group">
+    <label>이름 <span class="required-star">(필수)</span></label>
+    <input type="text" name="name" placeholder="이름을 입력해 주세요." required>
+</div>
+
+<!-- 주민등록번호 (2항목) -->
+<div class="field-group">
+    <label>주민등록번호(외국인등록번호) <span class="required-star">(필수)</span></label>
+    <div class="dual-input">
+        <input type="text" name="resident_num_front" placeholder="앞 6자리" maxlength="6">
+        <span class="dash">-</span>
+        <input type="password" name="resident_num_back" placeholder="뒤 7자리" maxlength="7">
+    </div>
+</div>
+
+<!-- 아이디 (3항목) -->
+<div class="field-group">
+    <label>아이디 <span class="required-star">(필수)</span></label>
+    <div class="input-with-btn">
+        <input type="text" name="username" placeholder="4~16자까지 영문/숫자만 허용">
+        <button type="button" class="inner-btn">중복확인</button>
+    </div>
+</div>
+
+<!-- 비밀번호 -->
+<div class="field-group">
+    <label>비밀번호 <span class="required-star">(필수)</span></label>
+    <input type="password" name="password" placeholder="비밀번호를 입력하세요" required>
+</div>
+
+            <!-- 하단 버튼 (클래스 명칭 확인) -->
+            <div class="button-group">
+                <a href="{% url 'login' %}" class="btn btn-secondary">취소하기</a>
+                <button type="submit" class="btn btn-primary">가입완료</button>
+            </div>
+        </form>
+    </div> <!-- 이 닫는 태그가 반드시 여기에 있어야 전체가 중앙에 모입니다! -->
+</body>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>QR코드 로그인 | 청춘로</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 1. 배경: 부드러운 파스텔톤 그라데이션 */
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            background: linear-gradient(135deg, #a7d8f5 0%, #b3e8e5 100%);
+            background-attachment: fixed;
+            color: #fff;
+        }
+
+         /* 상단바 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 50px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--glass-border);
+            position: fixed;
+            top: 0; width: 100%; box-sizing: border-box; z-index: 1000;
+        }
+
+        .logo { font-weight: bold; font-size: 1.4rem; cursor: pointer; }
+        
+        nav a {
+            text-decoration: none;
+            color: rgba(255,255,255,0.8);
+            margin-left: 20px;
+            font-size: 0.9rem;
+        }
+        /* 메인 컨테이너 */
+        main {
+            flex: 1;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 100px 20px 60px; /* 상단바 간격 확보 */
+        }
+
+        .page-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .page-sub { font-size: 1.1rem; margin-bottom: 40px; opacity: 0.9; }
+
+        /* 글래스모피즘 카드 컨테이너 */
+        .qr-container {
+            display: flex;
+            width: 1000px;
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* 좌측: QR 코드 영역 */
+        .qr-section {
+            flex: 1; padding: 60px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .qr-box {
+            width: 220px; height: 220px;
+            background: #fff; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .qr-box i { font-size: 180px; color: #444; } /* 실제 QR 이미지 대신 아이콘 */
+        .timer { font-size: 1.2rem; font-weight: bold; color: #ff5e5e; background: rgba(255,255,255,0.5); padding: 5px 15px; border-radius: 20px; }
+
+        /* 우측: 가이드 영역 */
+        .guide-section { flex: 1.5; padding: 50px; text-align: left; color: #444; }
+        .guide-title { font-size: 1.3rem; font-weight: bold; color: #2c3e50; margin-bottom: 10px; text-align: center; width: 100%; }
+        .guide-sub { font-size: 0.9rem; margin-bottom: 30px; text-align: center; display: block; opacity: 0.7; }
+
+        /* 가이드 그리드 (2x2) */
+        .guide-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .guide-item {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 20px; border-radius: 20px;
+            text-align: center; font-size: 0.85rem; line-height: 1.5;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .guide-item .step-img {
+            width: 60px; height: 60px; background: rgba(255,255,255,0.6);
+            border-radius: 50%; margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #5dade2;
+        }
+
+        /* 푸터 스타일 */
+        footer {
+            padding: 30px 50px; background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #555;
+        }
+        .sns-icons a { color: #555; font-size: 1.5rem; margin-left: 15px; transition: 0.3s; }
+        .sns-icons a:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">청춘로</div>
+        <nav>
+            <a href="#">청춘로AI</a>
+            <a href="#">통합검색</a>
+            <a href="/login/">로그인</a>
+            <a href="#" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:15px;">회원가입</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1 class="page-title">QR코드 로그인</h1>
+        <p class="page-sub">생체인증 로그인을 위해 아래 QR코드를 촬영해 주세요</p>
+
+        <div class="qr-container">
+            <!-- 좌측: QR 코드 -->
+            <div class="qr-section">
+                <div class="qr-box">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="timer">
+                    <i class="fas fa-clock"></i> <span id="time">01:00</span>
+                </div>
+                <button style="margin-top:20px; border:none; background:none; color:white; cursor:pointer; text-decoration:underline;">코드 재발급</button>
+            </div>
+
+            <!-- 우측: 방법 가이드 -->
+            <div class="guide-section">
+                <span class="guide-title">< QR코드 촬영 및 생체인증 로그인 방법 ></span>
+                <span class="guide-sub">딱맞춤 최신 모바일 앱에서 생체인증을 사용 중인 경우 이용할 수 있습니다.</span>
+                
+                <div class="guide-grid">
+                    <div class="guide-item">
+                        <div class="step-img"><i class="fas fa-mobile-alt"></i></div>
+                        스마트기기 카메라 앱으로<br>좌측 QR코드를 촬영해 주세요
+                    </div>
+                    <div class="guide-item">
+                        <div class="step-img"><i class="fas fa-link"></i></div>
+                        URL을 선택하여<br>딱맞춤 앱을 실행해 주세요
+                    </div>
+                    <div class="guide-item">
+                        <div class="step-img"><i class="fas fa-fingerprint"></i></div>
+                        모바일 앱에서<br>생체인증을 진행해 주세요
+                    </div>
+                    <div class="guide-item">
+                        <div class="step-img"><i class="fas fa-check-circle"></i></div>
+                        인증이 완료되면 PC가<br>정상 로그인 됩니다
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div>
+            <p>주소: 서울특별시 ... | 전화: 02-1234-5678 | 찾아오시는길</p>
+            <div class="footer-links">
+                <span>조직도</span> | <strong>개인정보처리방침</strong> | <span>저작권정책</span>
+            </div>
+            <p style="margin-top:10px;">Copyright © 2024 청년정책 ZIP. All rights reserved.</p>
+        </div>
+        <!-- 이 부분을 아래 코드로 교체하세요 -->
+        <div style="font-size: 1.5rem; display: flex; gap: 15px; align-items: center;">
+            <a href="https://www.instagram.com" target="_blank" style="color: white; text-decoration: none;">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://pf.kakao.com" target="_blank" style="color: white; text-decoration: none;">
+                <i class="fa-solid fa-comment"></i>
+            </a>
+            <a href="https://www.youtube.com" target="_blank" style="color: white; text-decoration: none;">
+                <i class="fa-brands fa-youtube"></i>
+            </a>
+        </div>
+    </footer>
+
+    <script>
+        // 간단한 타이머 스크립트
+        let timeLeft = 60;
+        const timerElement = document.getElementById('time');
+        setInterval(() => {
+            if(timeLeft <= 0) return;
+            timeLeft--;
+            const min = Math.floor(timeLeft / 60);
+            const sec = timeLeft % 60;
+            timerElement.innerText = `${min < 10 ? '0'+min : min}:${sec < 10 ? '0'+sec : sec}`;
+        }, 1000);
+    </script>
+</body>
+</html>

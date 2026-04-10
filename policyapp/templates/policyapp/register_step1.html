@@ -1,0 +1,179 @@
+{% block content %}
+<style>
+    /* 배경 및 컨테이너 스타일 (기존 스타일 유지) */
+    .register-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+    }
+
+    .terms-box {
+        border: 1px solid #ddd;
+        border-radius: 15px;
+        padding: 30px;
+        background: #fff;
+        text-align: left;
+    }
+
+    .sub-terms-box {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+
+    .term-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .req { color: #e74c3c; font-weight: bold; }
+    .view-link { color: #666; font-size: 0.85rem; text-decoration: underline; }
+
+    .info-notice {
+        background: #fff;
+        border: 1px solid #d1d8e0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+
+   /* 버튼 공통 스타일 */
+.btn-group {
+    display: flex;
+    /* 양끝 정렬 설정 */
+    justify-content: space-between; 
+    /* 버튼 사이의 최소 간격 */
+    gap: 15px; 
+    margin-top: 50px;
+    width: 100%;
+}
+
+.btn-group button {
+    /* 양끝 정렬 상태에서 버튼이 가득 차도록 설정 */
+    flex: 1; 
+    
+    /* 크기 대폭 확장 */
+    padding: 22px 0;      /* 상하 여백을 늘려 높이감 부여 */
+    font-size: 1.15rem;   /* 글자 크기 시원하게 변경 */
+    font-weight: 700;
+    
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 동의하기 (메인) */
+.btn-submit {
+    background: #3498db;
+    color: white;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3); /* 살짝 그림자를 주어 더 커 보이게 함 */
+}
+
+/* 취소하기 (서브) */
+.btn-cancel {
+    background: #eeeeee;
+    color: #444;
+}
+
+/* 버튼을 눌렀을 때 살짝 작아지는 효과 (클릭감) */
+.btn-group button:active {
+    transform: scale(0.98);
+}
+
+</style>
+
+<div class="register-container">
+    <h2 class="title">약관동의</h2>
+
+    <form method="post" id="terms-form">
+        {% csrf_token %}
+        <div class="terms-box glass-card">
+            <!-- 모두 동의 -->
+            <div class="term-item all-check">
+                <label style="cursor: pointer;">
+                    <input type="checkbox" id="check-all"> <strong>모두 동의합니다.</strong>
+                </label>
+            </div>
+            <hr>
+
+            <!-- 개별 약관 리스트 -->
+            <div class="terms-list">
+                <!-- 필수 항목들은 class="required-check"를 추가했습니다 -->
+                <div class="term-item">
+                    <label><input type="checkbox" name="term1" class="item-check required-check"> 이용 약관 <span class="req">(필수)</span></label>
+                    <a href="#" class="view-link">내용보기</a>
+                </div>
+                <div class="term-item">
+                    <label><input type="checkbox" name="term2" class="item-check required-check"> 개인정보 수집 및 이용 동의 <span class="req">(필수)</span></label>
+                    <a href="#" class="view-link">내용보기</a>
+                </div>
+                <div class="term-item">
+                    <label><input type="checkbox" name="term3" class="item-check"> 개인정보 수집 및 이용 동의 (선택)</label>
+                    <a href="#" class="view-link">내용보기</a>
+                </div>
+                
+                <div class="sub-terms-box">
+                    <div class="term-item">
+                        <label><input type="checkbox" name="term_sub1" class="item-check required-check"> 행정정보 공동이용 사전동의 <span class="req">(필수)</span></label>
+                        <a href="#" class="view-link">내용보기</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-notice">
+            <p>ℹ️ <strong>참고해 주세요</strong></p>
+            <p>혜택알리미, 생활정보서비스 동의하면 다양한 서비스를 제공받을 수 있습니다.</p>
+        </div>
+
+        <div class="btn-group">
+            <button type="button" class="login" onclick="history.back()">취소하기</button>
+            <button type="submit" class="btn-submit">동의하기</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const checkAll = document.getElementById('check-all');
+    const itemChecks = document.querySelectorAll('.item-check');
+    const requiredChecks = document.querySelectorAll('.required-check');
+    const form = document.getElementById('terms-form');
+
+    // 1. 모두 동의 로직
+    checkAll.addEventListener('change', (e) => {
+        itemChecks.forEach(check => {
+            check.checked = e.target.checked;
+        });
+    });
+
+    // 2. 개별 체크 해제 시 '모두 동의' 체크 해제
+    itemChecks.forEach(check => {
+        check.addEventListener('change', () => {
+            const allChecked = Array.from(itemChecks).every(c => c.checked);
+            checkAll.checked = allChecked;
+        });
+    });
+
+    // 3. 필수 동의 체크 검사 (다음 페이지 이동 방지)
+    form.addEventListener('submit', function(e) {
+        let isAllRequiredChecked = true;
+        
+        requiredChecks.forEach(cb => {
+            if (!cb.checked) {
+                isAllRequiredChecked = false;
+            }
+        });
+
+        if (!isAllRequiredChecked) {
+            e.preventDefault(); // 폼 전송 중단
+            alert('필수 약관에 모두 동의하셔야 다음 단계로 진행할 수 있습니다.');
+        }
+    });
+</script>
+{% endblock %}
