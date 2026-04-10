@@ -25,22 +25,23 @@ def fmt_date(raw):
 
 
 class Command(BaseCommand):
-    help = 'API 전체 수집 및 분야별 DB 저장 엔진 v46.0'
+    help = 'API 전체 수집 및 분야별 DB 저장 엔진 v47.0'
 
     def handle(self, *args, **options):
-        raw_key  = os.getenv('DATA_PORTAL_KEY', '').strip()
-        fss_key  = os.getenv('FSS_FINANCE_KEY', '').strip()
+        raw_key   = os.getenv('DATA_PORTAL_KEY', '').strip()
+        fss_key   = os.getenv('FSS_FINANCE_KEY', '').strip()
         youth_key = os.getenv('YOUTH_CENTER_KEY', '').strip()
-        seoul_key = os.getenv('SEOUL_DATA_KEY', '674251785565757339395267676773').strip()
+        seoul_key = os.getenv('SEOUL_DATA_KEY', '').strip()
 
         # 공공데이터포털 키는 URL 인코딩된 형태로 오기도 함
         decoded_key = unquote(raw_key) if raw_key else ''
-
-        lh_key = decoded_key or 'c59c241aebb26596d40484c1946d9af59feb143da8f8b2f23027d7bef61b6e3c'
+        lh_key = decoded_key or raw_key
         odcloud_key = lh_key
 
-        worknet_wanted_key = os.getenv('WORKNET_WANTED_KEY', 'ff512c61-a20a-4429-89ef-b173193177d9')
-        worknet_prog_key   = os.getenv('WORKNET_PROG_KEY',   '7e32dd70-50ac-413c-a46a-357fa12439ca')
+        # 고용24 키
+        worknet_채용_key = os.getenv('WORKNET_PROG_KEY', '').strip()   # 채용정보
+        worknet_edu_key  = os.getenv('WORKNET_EDU_KEY', '').strip()    # 취업역량강화
+        worknet_corp_key = os.getenv('WORKNET_CORP_KEY', '').strip()   # 강소기업
 
         self.headers = {
             'User-Agent': (
@@ -50,29 +51,28 @@ class Command(BaseCommand):
         }
 
         self.stdout.write(self.style.SUCCESS(
-            f'=== API 전체 수집 엔진 v46.0 시작 ({datetime.now().strftime("%Y-%m-%d %H:%M")}) ==='
+            f'=== API 전체 수집 엔진 v47.0 시작 ({datetime.now().strftime("%Y-%m-%d %H:%M")}) ==='
         ))
 
         # ── 주거 ─────────────────────────────────────────────────────────────
-        self.sync_lh_announcements(lh_key)
-        self.sync_lh_pre_subscription(lh_key)
-        self.sync_gh_announcements(odcloud_key)
-        self.sync_hug_announcements(lh_key)
         self.sync_housing_apt(odcloud_key)
         self.sync_housing_urbty(odcloud_key)
         self.sync_myhome(decoded_key)
         self.sync_sh_housing(odcloud_key)
+        self.sync_gh_announcements(odcloud_key)
+        self.sync_lh_rentals(lh_key)
 
         # ── 금융 ─────────────────────────────────────────────────────────────
         self.sync_fss_loans(fss_key)
         self.sync_fss_savings(fss_key)
-        self.sync_microfinance(lh_key)
+        self.sync_hug_finance(odcloud_key)
 
         # ── 복지 ─────────────────────────────────────────────────────────────
         self.sync_bokjiro(decoded_key or lh_key)
         self.sync_youth_center(youth_key)
         self.sync_seoul_youth(seoul_key)
-        self.sync_worknet_programs(worknet_prog_key)
+        self.sync_worknet_jobs(worknet_채용_key)
+        self.sync_worknet_edu(worknet_edu_key)
 
         # ── 마감 데이터 비활성화 ────────────────────────────────────────────
         self.purge_expired()
@@ -111,68 +111,43 @@ class Command(BaseCommand):
     # 주거 수집
     # ──────────────────────────────────────────────────────────────────────────
 
-    def sync_lh_announcements(self, key):
-        self.stdout.write('  [주거] LH 임대공고 수집...')
-        url = 'https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/getLeaseNoticeInfo1'
+    def sync_lh_rentals(self, key):
+        """LH 임대단지 목록 수집 (lhLeaseInfo1) → HousingProduct
+        실제 단지 정보(단지명·지역·세대수)가 포함된 목록 API"""
+        self.stdout.write('  [주거] LH 임대단지 수집...')
+        url = 'https://apis.data.go.kr/B552555/lhLeaseInfo1/lhLeaseInfo1'
         try:
-            res = requests.get(url, params={'serviceKey': key, 'PG_SZ': 100, 'PAGE': 1},
+            # 이 API는 날짜·지역 필터 없이 전체 조회
+            res = requests.get(url, params={'serviceKey': key, 'numOfRows': 200, 'pageNo': 1},
                                headers=self.headers, timeout=15)
-            root = ET.fromstring(res.content)
+            data = res.json()
+            # 응답: [{"dsSch":[...]}, {"dsList":[...], "resHeader":[...]}]
+            ds_list = []
+            for block in data:
+                if isinstance(block, dict) and 'dsList' in block:
+                    ds_list = block['dsList']
+                    break
             count = 0
-            for item in root.findall('.//item'):
-                pan_id = item.findtext('PAN_ID', '')
-                if not pan_id:
+            for item in ds_list:
+                cmp_cd = item.get('CMP_CD', '')
+                if not cmp_cd:
                     continue
                 HousingProduct.objects.update_or_create(
-                    manage_no=f'LH_{pan_id}',
+                    manage_no=f'LH_LEASE_{cmp_cd}',
                     defaults={
-                        'title':       f"[LH] {item.findtext('PAN_NM', 'LH 공고')}",
-                        'category':    item.findtext('UPP_AIS_TP_NM', '주택공고'),
-                        'region':      item.findtext('CNP_CD_NM', '전국'),
-                        'org':         '한국토지주택공사',
-                        'notice_date': fmt_date(item.findtext('PAN_NT_ST_DT')),
-                        'end_date':    fmt_date(item.findtext('CLSG_DT')),
-                        'url':         f'https://apply.lh.or.kr/lhapply/apply/panc/pancInfoDetail.do?panId={pan_id}',
-                        'is_active':   True,
-                        'raw_data':    {child.tag: child.text for child in item},
+                        'title':    f"[LH임대] {item.get('CMP_NM', 'LH 임대단지')}",
+                        'category': item.get('AIS_TP_NM', '임대'),
+                        'region':   item.get('CNP_CD_NM', '전국'),
+                        'org':      '한국토지주택공사',
+                        'url':      'https://apply.lh.or.kr/',
+                        'is_active': True,
+                        'raw_data': item,
                     }
                 )
                 count += 1
-            self.stdout.write(f'    + LH 임대공고 {count}건 저장')
+            self.stdout.write(f'    + LH 임대단지 {count}건 저장')
         except Exception as e:
-            self.stderr.write(f'  ! LH 공고 수집 오류: {e}')
-
-    def sync_lh_pre_subscription(self, key):
-        self.stdout.write('  [주거] LH 사전청약 수집...')
-        url = 'https://apis.data.go.kr/B552555/lhLeaseNoticeBfhInfo1/getLeaseNoticeBfhInfo1'
-        try:
-            res = requests.get(url, params={'serviceKey': key, 'PG_SZ': 50},
-                               headers=self.headers, timeout=10)
-            root = ET.fromstring(res.content)
-            count = 0
-            for item in root.findall('.//item'):
-                pan_id = item.findtext('PAN_ID', '')
-                if not pan_id:
-                    continue
-                raw = {child.tag: child.text for child in item}
-                HousingProduct.objects.update_or_create(
-                    manage_no=f'LH_PRE_{pan_id}',
-                    defaults={
-                        'title':       f"[LH/사전] {item.findtext('PAN_NM', '사전청약')}",
-                        'category':    '사전청약',
-                        'region':      item.findtext('CNP_CD_NM', '전국'),
-                        'org':         '한국토지주택공사',
-                        'notice_date': fmt_date(item.findtext('PAN_NT_ST_DT')),
-                        'end_date':    fmt_date(item.findtext('CLSG_DT')),
-                        'url':         f'https://apply.lh.or.kr/',
-                        'is_active':   True,
-                        'raw_data':    raw,
-                    }
-                )
-                count += 1
-            self.stdout.write(f'    + LH 사전청약 {count}건 저장')
-        except Exception as e:
-            self.stderr.write(f'  ! LH 사전청약 오류: {e}')
+            self.stderr.write(f'  ! LH 임대단지 오류: {e}')
 
     def sync_gh_announcements(self, key):
         self.stdout.write('  [주거] GH(경기주택도시공사) 공고 수집...')
@@ -200,35 +175,54 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(f'  ! GH 오류: {e}')
 
-    def sync_hug_announcements(self, key):
-        self.stdout.write('  [주거] HUG(주택도시보증공사) 기금 상품 수집...')
-        url = 'http://apis.data.go.kr/B551408/rent-housing-loan-rates/getRentHousingLoanRates'
-        try:
-            res = requests.get(url, params={'serviceKey': key, 'numOfRows': 30},
-                               headers=self.headers, timeout=10)
-            root = ET.fromstring(res.content)
-            count = 0
-            for item in root.findall('.//item'):
-                title = item.findtext('loanPrdtNm', 'HUG 안심전세')
-                raw = {child.tag: child.text for child in item}
-                # HUG 기금 상품은 금융(FinanceProduct)으로 저장
-                FinanceProduct.objects.update_or_create(
-                    product_id=f'HUG_{title}',
-                    defaults={
-                        'title':       f'[HUG] {title}',
-                        'bank_nm':     '주택도시보증공사',
-                        'category':    '기금대출/보증',
-                        'target_desc': item.findtext('loanTgtNm', ''),
-                        'base_rate':   float(item.findtext('loanBaseRt', '0') or 0),
-                        'url':         'https://www.khug.or.kr/',
-                        'is_active':   True,
-                        'raw_data':    raw,
-                    }
-                )
-                count += 1
-            self.stdout.write(f'    + HUG 기금상품 {count}건 저장')
-        except Exception as e:
-            self.stderr.write(f'  ! HUG 오류: {e}')
+    def sync_hug_finance(self, key):
+        """HUG(주택도시보증공사) 기금e든든 상품 → FinanceProduct
+        - 기본금리: odcloud 15134239/uddi:19cb848b-...
+        - 우대금리: odcloud 15134241/uddi:ff3242d6-...
+        """
+        self.stdout.write('  [금융] HUG 기금e든든 상품 수집...')
+        hug_sources = [
+            ('15134239', 'uddi:19cb848b-492c-4894-aeee-872573465987', '기본금리'),
+            ('15134241', 'uddi:ff3242d6-02be-4e74-b7ea-8a2d9dcd228e', '우대금리'),
+        ]
+        for ns, uddi, label in hug_sources:
+            url = f'https://api.odcloud.kr/api/{ns}/v1/{uddi}'
+            try:
+                res = requests.get(url, params={'serviceKey': key, 'page': 1, 'perPage': 100},
+                                   headers=self.headers, timeout=10)
+                data = res.json().get('data', [])
+                count = 0
+                for item in data:
+                    # 기본금리: '상품명' 필드, 우대금리: '우대금리명' 필드
+                    product_nm = item.get('상품명') or item.get('우대금리명', '')
+                    if not product_nm:
+                        continue
+                    # 기본금리는 숫자(%), 우대금리는 설명 텍스트
+                    rate_raw = item.get('기본금리', 0)
+                    try:
+                        rate = float(rate_raw) / 100 if float(rate_raw) > 10 else float(rate_raw)
+                    except (ValueError, TypeError):
+                        rate = 0.0
+                    # 우대금리는 benefit_desc에 상세 설명 저장
+                    benefit = item.get('우대금리설명', '') or str(item.get('소득최대금액', ''))
+                    FinanceProduct.objects.update_or_create(
+                        product_id=f'HUG_{ns}_{product_nm[:60]}',
+                        defaults={
+                            'title':       f'[HUG] {product_nm}',
+                            'bank_nm':     '주택도시보증공사',
+                            'category':    f'기금대출({label})',
+                            'base_rate':   rate,
+                            'limit_amt':   0,
+                            'target_desc': benefit,
+                            'url':         'https://nhuf.molit.go.kr/',
+                            'is_active':   True,
+                            'raw_data':    item,
+                        }
+                    )
+                    count += 1
+                self.stdout.write(f'    + HUG {label} {count}건 저장')
+            except Exception as e:
+                self.stderr.write(f'  ! HUG {label} 오류: {e}')
 
     def sync_housing_apt(self, key):
         self.stdout.write('  [주거] 청약홈 APT 분양공고 수집...')
@@ -602,24 +596,77 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(f'  ! 서울청년 오류: {e}')
 
-    def sync_worknet_programs(self, key):
-        """워크넷 취업지원프로그램 수집 → WelfareProduct (채용공고 제외)"""
-        self.stdout.write('  [복지] 워크넷 취업지원 프로그램 수집...')
+    def sync_worknet_jobs(self, key):
+        """고용24 채용정보 수집 → WelfareProduct (청년 일자리)"""
+        self.stdout.write('  [복지] 고용24 채용정보 수집...')
+        if not key:
+            self.stdout.write('    - WORKNET_PROG_KEY 없음, 건너뜀')
+            return
+        url = 'http://openapi.work.go.kr/opi/opi/opia/wantedApi.do'
+        try:
+            res = requests.get(url,
+                params={'authKey': key, 'callTp': 'L', 'returnType': 'XML',
+                        'display': 100, 'pageIndex': 1},
+                headers=self.headers, timeout=15)
+            root = ET.fromstring(res.content)
+            # 오류 메시지 확인
+            msg = root.findtext('.//message', '')
+            if msg and '유효하지 않은' in msg:
+                self.stderr.write(f'  ! 고용24 채용정보 키 오류: {msg}')
+                return
+            count = 0
+            for item in root.findall('.//wanted'):
+                w_id = item.findtext('wantedAuthNo', '')
+                if not w_id:
+                    continue
+                WelfareProduct.objects.update_or_create(
+                    policy_id=f'WORK_JOB_{w_id}',
+                    defaults={
+                        'title':       f"[채용] {item.findtext('title', '채용공고')}",
+                        'org_nm':      item.findtext('company', '기업'),
+                        'category':    '청년일자리',
+                        'benefit_desc': f"급여: {item.findtext('sal', '-')}, 지역: {item.findtext('region', '-')}",
+                        'region':      item.findtext('region', '전국') or '전국',
+                        'end_date':    fmt_date(item.findtext('closeDate')),
+                        'url':         f"https://www.work.go.kr/empInfo/empInfoSrch/detail/empDetailAuthView.do?wantedAuthNo={w_id}",
+                        'is_active':   True,
+                        'raw_data':    {child.tag: child.text for child in item},
+                    }
+                )
+                count += 1
+            self.stdout.write(f'    + 고용24 채용정보 {count}건 저장')
+        except Exception as e:
+            self.stderr.write(f'  ! 고용24 채용 오류: {e}')
+
+    def sync_worknet_edu(self, key):
+        """고용24 구직자취업역량 강화프로그램 수집 → WelfareProduct"""
+        self.stdout.write('  [복지] 고용24 취업역량강화프로그램 수집...')
+        if not key:
+            self.stdout.write('    - WORKNET_EDU_KEY 없음, 건너뜀')
+            return
         url = 'http://openapi.work.go.kr/opi/opi/opia/empIdpApi.do'
         try:
             res = requests.get(url,
                 params={'authKey': key, 'returnType': 'XML', 'display': 100},
                 headers=self.headers, timeout=15)
+            # HTML 404 응답 체크
+            if res.status_code != 200 or res.text.strip().startswith('<!'):
+                self.stderr.write(f'  ! 고용24 교육 엔드포인트 응답 없음 (status={res.status_code})')
+                return
             root = ET.fromstring(res.content)
+            msg = root.findtext('.//message', '')
+            if msg and '유효하지 않은' in msg:
+                self.stderr.write(f'  ! 고용24 교육 키 오류: {msg}')
+                return
             count = 0
             for item in root.findall('.//empIdp'):
                 p_id = item.findtext('empIdpNo', '')
                 if not p_id:
                     continue
                 WelfareProduct.objects.update_or_create(
-                    policy_id=f'WORKNET_P_{p_id}',
+                    policy_id=f'WORK_EDU_{p_id}',
                     defaults={
-                        'title':       f"[취업지원] {item.findtext('empIdpNm', '취업프로그램')}",
+                        'title':       f"[취업지원] {item.findtext('empIdpNm', '취업역량강화')}",
                         'org_nm':      item.findtext('instNm', '고용노동부'),
                         'category':    '취업역량강화',
                         'benefit_desc': item.findtext('empIdpCn', ''),
@@ -632,9 +679,9 @@ class Command(BaseCommand):
                     }
                 )
                 count += 1
-            self.stdout.write(f'    + 워크넷 취업지원 {count}건 저장')
+            self.stdout.write(f'    + 고용24 취업역량강화 {count}건 저장')
         except Exception as e:
-            self.stderr.write(f'  ! 워크넷 오류: {e}')
+            self.stderr.write(f'  ! 고용24 교육 오류: {e}')
 
     # ──────────────────────────────────────────────────────────────────────────
     # 마감 데이터 비활성화
