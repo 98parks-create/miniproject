@@ -119,22 +119,22 @@ class MatchingEngine:
         if target_keyword and target_keyword not in product_region: 
             return False
             
-        # 4. 모집 기간 필터링 (Strict - 과거 공고 배제)
+        # 4. 모집 기간 필터링 (v48 STRICT - 날짜 없는 주거 공고 완전 차단)
         today = date.today()
         end_date = product.get('end_date')
         notice_date = product.get('notice_date')
 
-        # 날짜 정보가 전혀 없으면 상시 모집으로 허용
+        # 날짜가 하나도 없으면 제외
         if not end_date and not notice_date:
-            return True
+            return False
 
-        # 마감일이 이미 지난 상품 배제
+        # 마감일이 지난 상품: 무조건 제외
         if end_date and end_date < today:
             return False
 
-        # 마감일 없이 공고일만 있는 경우: 공고일이 1년 이내인 것만 허용 (오래된 주거 공고 배제)
+        # 마감일 없이 공고일만 있는 경우: 공고일이 오늘 이후(모집예정)만 허용
         if not end_date and notice_date:
-            return notice_date >= today - timedelta(days=365)
+            return notice_date >= today
             
         # 5. [v19] 무주택 및 소유 이력 필터링 (Hyper-Strict)
         # 공공임대 및 대부분의 청약은 무주택 필수
@@ -216,18 +216,15 @@ class MatchingEngine:
             # [Steel Wall v31] 총 구매력: (보유 자금) + (연봉) + (대출 한도)
             total_budget = net_worth + annual_income + est_loan_cap
             
-            one_year_ago = today - timedelta(days=365)
             local_products = list(HousingProduct.objects.filter(
                 Q(region__icontains=reg_key) | Q(region__icontains="전용") | Q(region__icontains="전국"),
                 is_active=True
             ).filter(
-                # 마감일이 오늘 이후이거나, 시행예정(공고일 미래)이거나,
-                # 날짜 없는 상시모집 또는 1년 이내 공고된 마감일 없는 상품만 허용
+                # [v48 STRICT] 날짜 없는 주거 공고 완전 제외
+                # 오늘 이후 마감일 OR 오늘 이후 공고일(모집예정)만 허용
                 Q(end_date__gte=today) |
-                Q(notice_date__gte=today) |
-                Q(end_date__isnull=True, notice_date__isnull=True) |
-                Q(end_date__isnull=True, notice_date__gte=one_year_ago)
-            ).order_by('notice_date')[:150])
+                Q(notice_date__gte=today)
+            ).order_by('-notice_date')[:150])
             
             valid = []
             

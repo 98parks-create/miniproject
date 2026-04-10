@@ -688,19 +688,27 @@ class Command(BaseCommand):
     # ──────────────────────────────────────────────────────────────────────────
 
     def purge_expired(self):
-        """종료일이 지난 상품 비활성화 + 주거 유령 데이터(6개월 초과) 비활성화"""
+        """만료 데이터 비활성화
+        - 주거: 마감일 지난 것 즉시 + 날짜 없는 것도 30일 초과 시 제거 (공고 특성상 단기)
+        - 금융/복지: 마감일 지난 것만 (상시 운영 상품 유지)
+        """
         today = date.today()
-        ghost_limit = today - timedelta(days=180)
-
-        h = HousingProduct.objects.filter(end_date__lt=today,  is_active=True).update(is_active=False)
-        f = FinanceProduct.objects.filter(end_date__lt=today,  is_active=True).update(is_active=False)
-        w = WelfareProduct.objects.filter(end_date__lt=today,  is_active=True).update(is_active=False)
-        g = HousingProduct.objects.filter(
-            end_date__isnull=True, notice_date__lt=ghost_limit, is_active=True
+        # 주거: 날짜 없는 것, 마감 지난 것, 공고일 지난 것 전부 비활성화
+        h_expired = HousingProduct.objects.filter(end_date__lt=today, is_active=True).update(is_active=False)
+        h_no_date = HousingProduct.objects.filter(
+            end_date__isnull=True, notice_date__isnull=True, is_active=True
+        ).update(is_active=False)
+        h_old_notice = HousingProduct.objects.filter(
+            end_date__isnull=True, notice_date__lt=today, is_active=True
         ).update(is_active=False)
 
+        # 금융/복지: 명시적 마감일 지난 것만 (상시 운영 상품 유지)
+        f = FinanceProduct.objects.filter(end_date__lt=today, is_active=True).update(is_active=False)
+        w = WelfareProduct.objects.filter(end_date__lt=today, is_active=True).update(is_active=False)
+
         self.stdout.write(self.style.WARNING(
-            f'  [정화] 비활성화: 주거({h}), 금융({f}), 복지({w}), 주거유령({g})'
+            f'  [정화] 주거: 마감({h_expired}) + 날짜없음({h_no_date}) + 공고만료({h_old_notice}) / '
+            f'금융({f}) / 복지({w}) 비활성화'
         ))
 
     # ──────────────────────────────────────────────────────────────────────────
