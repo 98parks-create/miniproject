@@ -14,7 +14,7 @@ def test_lh_api():
     print(f"📡 LH 공고 API 연동 테스트 시작...")
     
     # 서울 지역(11) 임대공고(05) 테스트 (최신 엔드포인트 경로 반영)
-    url = "http://apis.data.go.kr/B552555/lhLeaseNotice1/lhLeaseNotice1/getLeaseNoticeInfo1"
+    url = "https://apis.data.go.kr/B552555/lhLeaseNoticeBfhSplInfo1/getLeaseNoticeBfhSplInfo1"
     params = {
         'serviceKey': api_key,
         'PG_SZ': '1',
